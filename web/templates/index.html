@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CaLiPeR v1.5</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d0d0d; color: #e0e0e0; font-family: 'Courier New', monospace; font-size: 15px; }
+
+  .top-banner {
+    background: #0a0a0a; border-bottom: 2px solid #00ff88;
+    display: flex; flex-direction: column; align-items: center; padding: 10px 20px 0;
+  }
+  .logo-wrap { height: 110px; display: flex; align-items: flex-end; overflow: hidden; }
+  header {
+    width: 100%; display: flex; align-items: center;
+    justify-content: space-between; padding: 8px 0 10px;
+  }
+  .header-left { display: flex; align-items: baseline; gap: 10px; }
+  /* CaLiPeR branding: capitals C,P,R = bright green; lowercase a,l,i,e,r = dim */
+  .header-title { font-size: 1.5rem; letter-spacing: 6px; font-weight: bold; }
+  .t-dim  { color: #558855; }
+  .t-hi   { color: #00ff88; }
+  .header-version {
+    font-size: 0.78rem; color: #00cc66; letter-spacing: 2px;
+    border: 1px solid #226622; padding: 1px 6px; border-radius: 3px;
+  }
+  .header-stats { display: flex; gap: 32px; }
+  .stat-block { text-align: center; }
+  .stat-label { font-size: 0.75rem; letter-spacing: 3px; color: #888; display: block; }
+  .stat-val   { font-size: 1.6rem; color: #00ff88; font-weight: bold; display: block; line-height: 1.2; }
+  .status-dot {
+    display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+    background: #00ff88; margin-right: 8px; animation: blink 2.5s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.15} }
+
+  .main { display: grid; grid-template-columns: 300px 1fr; height: calc(100vh - 150px); }
+
+  .left-panel {
+    background: #101010; border-right: 1px solid #2a2a2a;
+    padding: 16px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto;
+  }
+  .section-label {
+    font-size: 0.8rem; letter-spacing: 3px; color: #888;
+    text-transform: uppercase; margin-bottom: 5px; display: block;
+  }
+  .divider { border: none; border-top: 1px solid #1e1e1e; margin: 2px 0; }
+
+  .plate-hero {
+    background: #f5f0e8; color: #111; border-radius: 6px; padding: 14px 8px;
+    text-align: center; font-size: 2.2rem; font-weight: 900; letter-spacing: 10px;
+    font-family: 'Arial Black', sans-serif; min-height: 72px;
+    display: flex; align-items: center; justify-content: center;
+    border: 3px solid #bbb; box-shadow: inset 0 0 0 2px #999;
+  }
+  .plate-hero.empty {
+    background: #151515; color: #555; border-color: #2a2a2a;
+    box-shadow: none; font-size: 1rem; letter-spacing: 3px;
+  }
+  .plate-time { font-size: 0.85rem; color: #888; text-align: center; margin-top: 4px; }
+
+  .capture-wrap {
+    width: 100%; min-height: 80px; background: #0a0a0a;
+    border: 1px solid #2a2a2a; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+  }
+  .capture-wrap img { width: 100%; display: block; border-radius: 4px; }
+  .no-img { color: #555; font-size: 0.85rem; }
+
+  .conf-row { display: flex; align-items: center; gap: 12px; }
+  .conf-bar  { flex: 1; height: 6px; background: #1e1e1e; border-radius: 3px; overflow: hidden; }
+  .conf-fill { height: 100%; background: #00ff88; transition: width 0.4s; border-radius: 3px; }
+  .conf-pct  { font-size: 1rem; color: #00ff88; min-width: 44px; text-align: right; font-weight: bold; }
+
+  .exp-btn {
+    width: 100%; padding: 11px 10px; border-radius: 4px; cursor: pointer;
+    font-family: inherit; font-size: 0.85rem; letter-spacing: 2px; font-weight: bold;
+    text-transform: uppercase; transition: all 0.25s; border: 2px solid;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .exp-btn.unlocked { background: none; border-color: #446644; color: #88aa88; }
+  .exp-btn.unlocked:hover { border-color: #00ff88; color: #00ff88; background: #0a1a0a; }
+  .exp-btn.locked   { background: #0a2a0a; border-color: #00ff88; color: #00ff88; }
+  .exp-btn.locked:hover { background: #0d3a0d; }
+  .exp-status { font-size: 0.72rem; color: #666; text-align: center; margin-top: -6px; letter-spacing: 1px; }
+  .exp-status.is-locked { color: #448844; }
+
+  .setting-row { display: flex; flex-direction: column; gap: 4px; }
+  .setting-header { display: flex; justify-content: space-between; align-items: baseline; }
+  .setting-name  { font-size: 0.75rem; color: #aaa; letter-spacing: 1px; }
+  .setting-val   { font-size: 0.85rem; color: #00ff88; font-weight: bold; min-width: 50px; text-align: right; }
+  input[type=range] { width: 100%; height: 4px; border-radius: 2px; cursor: pointer; accent-color: #00ff88; background: #1e1e1e; }
+  .setting-hints { display: flex; justify-content: space-between; font-size: 0.62rem; color: #444; }
+
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; }
+  .toggle-name { font-size: 0.75rem; color: #aaa; letter-spacing: 1px; }
+  .toggle {
+    position: relative; width: 40px; height: 22px; cursor: pointer;
+    background: #222; border-radius: 11px; border: 1px solid #333; transition: all 0.2s;
+  }
+  .toggle.on { background: #0a3a0a; border-color: #00ff88; }
+  .toggle::after {
+    content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%;
+    background: #555; top: 2px; left: 2px; transition: all 0.2s;
+  }
+  .toggle.on::after { background: #00ff88; left: 20px; }
+
+  /* E-ink status indicator */
+  .eink-status {
+    font-size: 0.72rem; color: #666; text-align: center;
+    margin-top: -6px; letter-spacing: 1px;
+  }
+  .eink-status.active { color: #448844; }
+
+  .btn-action {
+    background: none; border: 2px solid #444; color: #aaa;
+    padding: 10px; border-radius: 4px; cursor: pointer;
+    font-family: inherit; font-size: 0.85rem; letter-spacing: 2px;
+    transition: all 0.2s; width: 100%; text-transform: uppercase; font-weight: bold;
+  }
+  .btn-action:hover { border-color: #ff4444; color: #ff6666; }
+
+  .right-panel { display: flex; flex-direction: column; overflow: hidden; }
+  .pool-header {
+    padding: 14px 18px 10px; display: flex; align-items: center;
+    justify-content: space-between; border-bottom: 1px solid #2a2a2a; flex-shrink: 0;
+  }
+  .btn-view-all {
+    background: #1a3a1a; border: 2px solid #00aa55; color: #00ff88;
+    padding: 8px 18px; border-radius: 4px; cursor: pointer;
+    font-family: inherit; font-size: 0.85rem; letter-spacing: 2px;
+    transition: all 0.2s; text-transform: uppercase; font-weight: bold;
+  }
+  .btn-view-all:hover { background: #00aa55; color: #000; }
+
+  .pool-scroll { overflow-y: auto; padding: 14px 18px; flex: 1; }
+  .pool-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+    gap: 12px; align-content: start;
+  }
+  .plate-card {
+    background: #151515; border: 2px solid #2a2a2a; border-radius: 6px;
+    padding: 12px 14px; cursor: pointer; transition: border-color 0.15s, background 0.15s;
+  }
+  .plate-card:hover { border-color: #00ff88; background: #1a1a1a; }
+  .card-plate { font-size: 1.2rem; font-weight: bold; letter-spacing: 5px; color: #fff; margin-bottom: 8px; font-family: 'Arial Black', sans-serif; }
+  .card-divider { border: none; border-top: 1px solid #2a2a2a; margin: 6px 0; }
+  .card-meta { font-size: 0.82rem; color: #aaa; line-height: 2; }
+  .card-meta .cnt { color: #00cc66; font-weight: bold; font-size: 0.9rem; }
+  .conf-good { color: #00ff88; font-weight: bold; }
+  .conf-ok   { color: #ddcc00; font-weight: bold; }
+  .conf-low  { color: #ff6633; font-weight: bold; }
+  .card-ts   { color: #777; font-size: 0.78rem; }
+
+  .modal-bg {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.93); z-index: 200;
+    align-items: flex-start; justify-content: center; padding: 40px 20px; overflow-y: auto;
+  }
+  .modal-bg.open { display: flex; }
+  .modal-box { background: #111; border: 2px solid #333; border-radius: 8px; width: 100%; max-width: 980px; }
+  .modal-box.detail-box { max-width: 500px; align-self: center; padding: 24px; }
+  .modal-header {
+    padding: 16px 20px; border-bottom: 1px solid #2a2a2a;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-title { font-size: 0.9rem; letter-spacing: 4px; color: #00ff88; font-weight: bold; }
+  .modal-close {
+    background: #2a0000; border: 2px solid #aa2222; color: #ff6666;
+    padding: 6px 14px; border-radius: 3px; cursor: pointer;
+    font-family: inherit; font-size: 0.8rem; font-weight: bold;
+  }
+  .modal-close:hover { background: #aa2222; color: #fff; }
+  #pool-table { width: 100%; border-collapse: collapse; }
+  #pool-table th { text-align: left; padding: 12px 16px; font-size: 0.75rem; letter-spacing: 3px; color: #888; border-bottom: 1px solid #2a2a2a; text-transform: uppercase; }
+  #pool-table td { padding: 10px 16px; border-bottom: 1px solid #1a1a1a; font-size: 0.85rem; color: #ccc; vertical-align: middle; }
+  #pool-table tr:hover td { background: #171717; }
+  .td-plate { font-weight: bold; letter-spacing: 4px; color: #fff; font-size: 1rem; font-family: 'Arial Black', sans-serif; }
+  .detail-plate {
+    font-size: 2.2rem; font-weight: 900; letter-spacing: 8px; font-family: 'Arial Black', sans-serif;
+    background: #f5f0e8; color: #111; border-radius: 5px; padding: 14px;
+    text-align: center; margin-bottom: 16px; border: 3px solid #bbb;
+  }
+  .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1e1e1e; font-size: 0.88rem; }
+  .detail-row .dk { color: #888; }
+  .detail-row .dv { color: #eee; font-weight: bold; }
+  .detail-img { width: 100%; border-radius: 4px; margin-top: 14px; display: none; }
+  .btn-detail-close {
+    margin-top: 16px; width: 100%; background: none; border: 2px solid #444; color: #aaa;
+    padding: 10px; border-radius: 4px; cursor: pointer; font-family: inherit;
+    font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase; font-weight: bold;
+  }
+  .btn-detail-close:hover { border-color: #00ff88; color: #00ff88; }
+
+  .pulse { animation: pulse 0.5s ease-out; }
+  @keyframes pulse { 0%{transform:scale(1.05)} 100%{transform:scale(1)} }
+
+  @media (max-width: 600px) {
+    .main { grid-template-columns: 1fr; }
+    .left-panel { border-right: none; border-bottom: 1px solid #2a2a2a; max-height: 60vh; }
+  }
+</style>
+</head>
+<body>
+
+<div class="top-banner">
+  <div class="logo-wrap">
+    <svg width="100" height="110" viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg">
+      <rect x="14" y="56" width="72" height="54" rx="3" fill="#1e1e1e"/>
+      <polygon points="50,56 18,56 26,78" fill="#161616"/>
+      <polygon points="50,56 82,56 74,78" fill="#161616"/>
+      <rect x="40" y="56" width="20" height="28" fill="#d8d4cc"/>
+      <polygon points="46,58 54,58 52,80 48,80" fill="#bb1111"/>
+      <polygon points="48,80 52,80 50,88" fill="#991111"/>
+      <polygon points="40,52 50,62 34,64" fill="#d8d4cc"/>
+      <polygon points="60,52 50,62 66,64" fill="#d8d4cc"/>
+      <rect x="38" y="44" width="24" height="14" rx="3" fill="#c4956a"/>
+      <circle cx="50" cy="78" r="2.5" fill="#0d0d0d"/>
+      <circle cx="50" cy="88" r="2.5" fill="#0d0d0d"/>
+      <circle cx="50" cy="98" r="2.5" fill="#0d0d0d"/>
+      <rect x="64" y="62" width="8" height="5" rx="1" fill="#223355"/>
+      <ellipse cx="50" cy="26" rx="30" ry="5.5" fill="#0d0d0d"/>
+      <ellipse cx="50" cy="14" rx="22" ry="14" fill="#0d0d0d"/>
+      <rect x="22" y="23" width="56" height="4" rx="1" fill="#111"/>
+      <circle cx="50" cy="38" r="16" fill="#3d8c1e"/>
+      <ellipse cx="44" cy="32" rx="5" ry="3.5" fill="#5cb832" opacity="0.65"/>
+      <ellipse cx="56" cy="46" rx="5" ry="3" fill="#2a6010" opacity="0.5"/>
+      <line x1="50" y1="22" x2="52" y2="17" stroke="#5a3010" stroke-width="2"/>
+      <ellipse cx="56" cy="15" rx="6" ry="2.5" fill="#2d7010" transform="rotate(-25 56 15)"/>
+      <ellipse cx="46" cy="14" rx="5" ry="2" fill="#3a8a1a" transform="rotate(15 46 14)"/>
+    </svg>
+  </div>
+  <header>
+    <div class="header-left">
+      <span class="header-title">
+        <span class="status-dot"></span><span class="t-hi">C</span><span class="t-dim">a</span><span class="t-hi">L</span><span class="t-dim">i</span><span class="t-hi">P</span><span class="t-dim">e</span><span class="t-hi">R</span>
+      </span>
+      <span class="header-version">v1.4</span>
+    </div>
+    <div class="header-stats">
+      <div class="stat-block"><span class="stat-label">POOL</span><span class="stat-val" id="s-unique">—</span></div>
+      <div class="stat-block"><span class="stat-label">READS</span><span class="stat-val" id="s-total">—</span></div>
+    </div>
+  </header>
+</div>
+
+<div class="main">
+  <div class="left-panel">
+
+    <div>
+      <span class="section-label">Latest Read</span>
+      <div class="plate-hero empty" id="latest-text">WAITING...</div>
+      <div class="plate-time" id="latest-time">&nbsp;</div>
+    </div>
+
+    <div>
+      <span class="section-label">Capture</span>
+      <div class="capture-wrap" id="capture-wrap"><span class="no-img">NO CAPTURE</span></div>
+    </div>
+
+    <div>
+      <span class="section-label">Confidence</span>
+      <div class="conf-row">
+        <div class="conf-bar"><div class="conf-fill" id="conf-fill" style="width:0%"></div></div>
+        <div class="conf-pct" id="conf-pct">—</div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Exposure lock -->
+    <div>
+      <span class="section-label">Exposure</span>
+      <button class="exp-btn unlocked" id="exp-btn" onclick="toggleExposure()">
+        <span id="exp-icon">🔓</span><span id="exp-label">LOCK EXPOSURE</span>
+      </button>
+      <div class="exp-status" id="exp-status">Auto — adjusting to scene</div>
+    </div>
+
+    <!-- OCR settings -->
+    <div class="setting-row">
+      <div class="setting-header">
+        <span class="setting-name">MIN CONFIDENCE</span>
+        <span class="setting-val" id="val-conf">0.70</span>
+      </div>
+      <input type="range" id="sl-conf" min="0.40" max="0.95" step="0.05" value="0.70"
+             oninput="sliderInput('conf')" onchange="pushSetting('min_confidence', +this.value)">
+      <div class="setting-hints"><span>Noisy</span><span>Precise</span></div>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-header">
+        <span class="setting-name">CAPTURE INTERVAL</span>
+        <span class="setting-val" id="val-interval">1.5s</span>
+      </div>
+      <input type="range" id="sl-interval" min="0.25" max="4.0" step="0.25" value="1.5"
+             oninput="sliderInput('interval')" onchange="pushSetting('capture_interval', +this.value)">
+      <div class="setting-hints"><span>Fast</span><span>Slow</span></div>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-header">
+        <span class="setting-name">SHUTTER SPEED</span>
+        <span class="setting-val" id="val-shutter">AUTO</span>
+      </div>
+      <input type="range" id="sl-shutter" min="0" max="33000" step="1000" value="0"
+             oninput="sliderInput('shutter')" onchange="pushSetting('shutter_speed_us', +this.value)">
+      <div class="setting-hints"><span>Auto</span><span>33ms</span></div>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-header">
+        <span class="setting-name">OCR RESOLUTION</span>
+        <span class="setting-val" id="val-downscale">1600px</span>
+      </div>
+      <input type="range" id="sl-downscale" min="0" max="1920" step="160" value="1600"
+             oninput="sliderInput('downscale')" onchange="pushSetting('ocr_downscale', +this.value)">
+      <div class="setting-hints"><span>640px</span><span>Full</span></div>
+    </div>
+
+    <div class="toggle-row">
+      <span class="toggle-name">CLAHE ENHANCE</span>
+      <div class="toggle" id="tog-clahe" onclick="toggleClahe()"></div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- E-ink display controls -->
+    <div>
+      <span class="section-label">E-ink Display</span>
+      <div class="toggle-row" style="margin-bottom:8px">
+        <span class="toggle-name">DISPLAY ENABLED</span>
+        <div class="toggle" id="tog-eink" onclick="toggleEink()"></div>
+      </div>
+      <div class="eink-status" id="eink-status">Initialising...</div>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-header">
+        <span class="setting-name">PLATE CYCLE TIME</span>
+        <span class="setting-val" id="val-cycle">8s</span>
+      </div>
+      <input type="range" id="sl-cycle" min="0.25" max="30" step="0.25" value="8"
+             oninput="sliderInput('cycle')" onchange="pushSetting('eink_cycle_secs', +this.value)">
+      <div class="setting-hints"><span>2s</span><span>30s</span></div>
+
+    <div class="setting-row">
+      <div class="setting-header">
+        <span class="setting-name">PLATE MAX AGE</span>
+        <span class="setting-val" id="val-maxage">60m</span>
+      </div>
+      <input type="range" id="sl-maxage" min="0" max="14400" step="300" value="3600"
+             oninput="sliderInput('maxage')" onchange="pushSetting('plate_max_age', +this.value)">
+      <div class="setting-hints"><span>Off</span><span>4hr</span></div>
+    </div>
+    </div>
+
+    <hr class="divider">
+
+    <div>
+      <button class="btn-action" onclick="clearPool()">⌫ &nbsp;CLEAR POOL</button>
+      <button class="btn-action" id="btn-refresh-display" onclick="triggerDisplayRefresh()"
+              style="margin-top:8px;background:#111;border-color:#336633">
+        ↻ &nbsp;REFRESH DISPLAY
+      </button>
+    </div>
+
+    <hr class="divider">
+
+    <div class="toggle-row" style="flex-direction:column;align-items:flex-start;gap:8px">
+      <span class="toggle-name">MANUAL ADD TO POOL</span>
+      <div style="display:flex;gap:8px;width:100%">
+        <input type="text" id="manual-plate-input"
+               placeholder="PLATE STRING"
+               maxlength="12"
+               style="flex:1;background:#0a0a0a;border:1px solid #333;color:#fff;
+                      padding:7px 10px;border-radius:4px;font-family:inherit;
+                      font-size:0.85rem;letter-spacing:2px;text-transform:uppercase"
+               onkeydown="if(event.key==='Enter') addPlateManual()">
+        <button class="btn-action" onclick="addPlateManual()"
+                style="margin:0;padding:7px 14px;min-width:0">ADD</button>
+      </div>
+      <span id="manual-add-status" style="font-size:0.72rem;color:#666;min-height:14px"></span>
+    </div>
+
+  </div>
+
+  <div class="right-panel">
+    <div class="pool-header">
+      <span class="section-label" style="margin:0;font-size:0.9rem">Plate Pool</span>
+      <button class="btn-view-all" onclick="openPoolModal()">VIEW ALL ↗</button>
+    </div>
+    <div class="pool-scroll">
+      <div class="pool-grid" id="pool-grid">
+        <div style="color:#666;font-size:0.85rem;grid-column:1/-1;padding:10px 0">No plates captured yet.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pool table modal -->
+<div class="modal-bg" id="modal-pool">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">COMPLETE PLATE POOL</span>
+      <button class="modal-close" onclick="closePoolModal()">✕ CLOSE</button>
+    </div>
+    <table id="pool-table">
+      <thead><tr>
+        <th>Plate</th><th>Reads</th><th>Confidence</th>
+        <th>First Seen</th><th>Last Seen</th><th>Capture</th>
+      </tr></thead>
+      <tbody id="pool-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Detail modal -->
+<div class="modal-bg" id="modal-detail" style="align-items:center">
+  <div class="modal-box detail-box">
+    <div class="detail-plate" id="d-plate">—</div>
+    <div class="detail-row"><span class="dk">First seen</span><span class="dv" id="d-first">—</span></div>
+    <div class="detail-row"><span class="dk">Last seen</span> <span class="dv" id="d-last">—</span></div>
+    <div class="detail-row"><span class="dk">Total reads</span><span class="dv" id="d-count">—</span></div>
+    <div class="detail-row"><span class="dk">Confidence</span><span class="dv" id="d-conf">—</span></div>
+    <img class="detail-img" id="d-img" src="" alt="capture">
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn-detail-close" style="flex:1" onclick="closeDetail()">CLOSE</button>
+      <button class="btn-detail-close" style="flex:0 0 auto;border-color:#882222;color:#cc4444"
+              onclick="deletePlateFromDetail()"
+              title="Remove this plate from pool">⌫ DELETE</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+let lastText = null;
+
+function parseLocal(iso) {
+  if (!iso) return null;
+  const s = iso.replace('T',' ').split(/[^0-9]/);
+  return new Date(+s[0],+s[1]-1,+s[2],+s[3]||0,+s[4]||0,+s[5]||0);
+}
+function fmt(iso) {
+  const d = parseLocal(iso); if (!d||isNaN(d)) return iso||'—';
+  return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'}) +
+    ' ' + d.toLocaleDateString([],{month:'short',day:'numeric'});
+}
+function ago(iso) {
+  const d = parseLocal(iso); if (!d||isNaN(d)) return '';
+  const s = Math.floor((Date.now()-d)/1000);
+  if (s<0) return 'just now';
+  if (s<60) return s+'s ago';
+  if (s<3600) return Math.floor(s/60)+'m ago';
+  if (s<86400) return Math.floor(s/3600)+'h ago';
+  return Math.floor(s/86400)+'d ago';
+}
+function confClass(c) {
+  const p=Math.round((c||0)*100);
+  return p>=85?'conf-good':p>=70?'conf-ok':'conf-low';
+}
+
+async function pushSetting(key, value) {
+  try {
+    const d = await fetch('/api/settings',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({[key]: value})
+    }).then(r=>r.json());
+    applySettings(d);
+  } catch(e){ console.error('Setting push failed',e); }
+}
+
+function applySettings(s) {
+  applyExposureUI(s.exposure_locked);
+
+  document.getElementById('sl-conf').value     = s.min_confidence;
+  document.getElementById('val-conf').textContent = s.min_confidence.toFixed(2);
+
+  document.getElementById('sl-interval').value    = s.capture_interval;
+  document.getElementById('val-interval').textContent = s.capture_interval.toFixed(1)+'s';
+
+  document.getElementById('sl-shutter').value    = s.shutter_speed_us;
+  document.getElementById('val-shutter').textContent =
+    s.shutter_speed_us===0 ? 'AUTO' : (s.shutter_speed_us/1000).toFixed(0)+'ms';
+
+  document.getElementById('sl-downscale').value  = s.ocr_downscale;
+  document.getElementById('val-downscale').textContent =
+    s.ocr_downscale===0 ? 'FULL' : s.ocr_downscale+'px';
+
+  document.getElementById('tog-clahe').className = 'toggle'+(s.clahe_enabled?' on':'');
+
+  // E-ink controls
+  const einkTog = document.getElementById('tog-eink');
+  const einkSt  = document.getElementById('eink-status');
+  einkTog.className = 'toggle'+(s.eink_enabled?' on':'');
+  if (s.eink_enabled) {
+    einkSt.textContent = 'Active — cycling pool to display';
+    einkSt.className = 'eink-status active';
+  } else {
+    einkSt.textContent = 'Disabled';
+    einkSt.className = 'eink-status';
+  }
+
+  const cv = +(s.eink_cycle_secs||8);
+  document.getElementById('sl-cycle').value    = cv;
+  document.getElementById('val-cycle').textContent = cv < 1 ? cv.toFixed(2)+'s' : cv.toFixed(1)+'s';
+  const ma = s.plate_max_age||0;
+  document.getElementById('sl-maxage').value = ma;
+  document.getElementById('val-maxage').textContent = ma===0?'OFF':ma>=3600?(ma/3600).toFixed(1)+'hr':(ma/60).toFixed(0)+'m';
+}
+
+function sliderInput(which) {
+  const map = {
+    conf:      ['sl-conf',      'val-conf',      v => v.toFixed(2)],
+    interval:  ['sl-interval',  'val-interval',  v => v.toFixed(1)+'s'],
+    shutter:   ['sl-shutter',   'val-shutter',   v => v==0?'AUTO':(v/1000).toFixed(0)+'ms'],
+    downscale: ['sl-downscale', 'val-downscale', v => v==0?'FULL':v+'px'],
+    cycle:     ['sl-cycle',     'val-cycle',     v => v < 1 ? v.toFixed(2)+'s' : v.toFixed(1)+'s'],
+    maxage:    ['sl-maxage',    'val-maxage',    v => v==0?'OFF':v>=3600?(v/3600).toFixed(1)+'hr':(v/60).toFixed(0)+'m'],
+  };
+  const [sid,vid,f] = map[which];
+  document.getElementById(vid).textContent = f(+document.getElementById(sid).value);
+}
+
+async function toggleExposure() {
+  const s = await fetch('/api/settings').then(r=>r.json());
+  pushSetting('exposure_locked', !s.exposure_locked);
+}
+async function toggleClahe() {
+  const s = await fetch('/api/settings').then(r=>r.json());
+  pushSetting('clahe_enabled', !s.clahe_enabled);
+}
+async function toggleEink() {
+  const s = await fetch('/api/settings').then(r=>r.json());
+  pushSetting('eink_enabled', !s.eink_enabled);
+}
+
+function applyExposureUI(locked) {
+  const btn=document.getElementById('exp-btn');
+  const icon=document.getElementById('exp-icon');
+  const label=document.getElementById('exp-label');
+  const status=document.getElementById('exp-status');
+  if (locked) {
+    btn.className='exp-btn locked'; icon.textContent='🔒';
+    label.textContent='UNLOCK EXPOSURE';
+    status.textContent='Locked — fixed to current scene';
+    status.className='exp-status is-locked';
+  } else {
+    btn.className='exp-btn unlocked'; icon.textContent='🔓';
+    label.textContent='LOCK EXPOSURE';
+    status.textContent='Auto — adjusting to scene';
+    status.className='exp-status';
+  }
+}
+
+async function refreshSettings() {
+  try { applySettings(await fetch('/api/settings').then(r=>r.json())); } catch(e){}
+}
+
+async function refreshLatest() {
+  try {
+    const d = await fetch('/api/latest').then(r=>r.json());
+    if (!d) return;
+    const el = document.getElementById('latest-text');
+    if (d.plate_text !== lastText) {
+      el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse');
+      lastText = d.plate_text;
+    }
+    el.textContent = d.plate_text; el.classList.remove('empty');
+    document.getElementById('latest-time').textContent = fmt(d.last_seen);
+    const pct = Math.round((d.confidence||0)*100);
+    document.getElementById('conf-fill').style.width = pct+'%';
+    document.getElementById('conf-pct').textContent = pct+'%';
+    if (d.latest_image)
+      document.getElementById('capture-wrap').innerHTML =
+        `<img src="/captures/${d.latest_image}" alt="plate">`;
+  } catch(e){}
+}
+
+async function refreshPool() {
+  try {
+    const plates = await fetch('/api/plates').then(r=>r.json());
+    const grid = document.getElementById('pool-grid');
+    if (!plates.length) {
+      grid.innerHTML='<div style="color:#666;font-size:0.85rem;grid-column:1/-1;padding:10px 0">No plates captured yet.</div>';
+      return;
+    }
+    grid.innerHTML = plates.map(p => {
+      const pct=Math.round((p.confidence||0)*100);
+      return `<div class="plate-card" onclick='showDetail(${JSON.stringify(p)})'>
+        <div class="card-plate">${p.plate_text}</div>
+        <hr class="card-divider">
+        <div class="card-meta">
+          <span class="cnt">×${p.seen_count}</span> &nbsp;·&nbsp;
+          <span class="${confClass(p.confidence)}">${pct}%</span><br>
+          Last: <span style="color:#ccc">${ago(p.last_seen)}</span><br>
+          <span class="card-ts">${fmt(p.last_seen)}</span>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e){}
+}
+
+async function refreshStats() {
+  try {
+    const s = await fetch('/api/stats').then(r=>r.json());
+    document.getElementById('s-unique').textContent = s.unique_plates;
+    document.getElementById('s-total').textContent  = s.total;
+  } catch(e){}
+}
+
+async function clearPool() {
+  if (!confirm('Clear all plates from pool?')) return;
+  await fetch('/api/clear',{method:'POST'});
+  lastText=null;
+  const el=document.getElementById('latest-text');
+  el.textContent='WAITING...'; el.classList.add('empty');
+  document.getElementById('latest-time').textContent='\u00a0';
+  document.getElementById('conf-fill').style.width='0%';
+  document.getElementById('conf-pct').textContent='—';
+  document.getElementById('capture-wrap').innerHTML='<span class="no-img">NO CAPTURE</span>';
+  refreshPool(); refreshStats();
+}
+
+function showDetail(p) {
+  document.getElementById('d-plate').textContent = p.plate_text;
+  document.getElementById('d-first').textContent = fmt(p.first_seen);
+  document.getElementById('d-last').textContent  = fmt(p.last_seen);
+  document.getElementById('d-count').textContent = p.seen_count;
+  document.getElementById('d-conf').textContent  = Math.round((p.confidence||0)*100)+'%';
+  const img=document.getElementById('d-img');
+  if (p.latest_image) { img.src=`/captures/${p.latest_image}`; img.style.display='block'; }
+  else img.style.display='none';
+  document.getElementById('modal-detail').classList.add('open');
+}
+function closeDetail() { document.getElementById('modal-detail').classList.remove('open'); }
+document.getElementById('modal-detail').addEventListener('click',e=>{
+  if(e.target===document.getElementById('modal-detail')) closeDetail();
+});
+
+async function deletePlateFromDetail() {
+  const plate = document.getElementById('d-plate').textContent;
+  if (!plate || plate === '—') return;
+  if (!confirm(`Remove "${plate}" from pool?`)) return;
+  try {
+    await fetch('/api/plate/delete', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({plate_text: plate})
+    });
+    closeDetail();
+    refreshPool(); refreshStats();
+  } catch(e) { alert('Delete failed: ' + e); }
+}
+
+async function addPlateManual() {
+  const input = document.getElementById('manual-plate-input');
+  const status = document.getElementById('manual-add-status');
+  const val = input.value.trim().toUpperCase();
+  if (!val) { status.textContent = 'Enter a plate string.'; status.style.color='#aa4444'; return; }
+  try {
+    const r = await fetch('/api/plate/add', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({plate_text: val})
+    });
+    const d = await r.json();
+    if (d.status === 'ok') {
+      status.textContent = `Added: ${d.plate_text}`;
+      status.style.color = '#00cc66';
+      input.value = '';
+      refreshPool(); refreshStats();
+    } else {
+      status.textContent = 'Add failed.';
+      status.style.color = '#aa4444';
+    }
+  } catch(e) {
+    status.textContent = 'Error: ' + e;
+    status.style.color = '#aa4444';
+  }
+  setTimeout(() => { status.textContent = ''; }, 3000);
+}
+
+async function triggerDisplayRefresh() {
+  const btn = document.getElementById('btn-refresh-display');
+  btn.textContent = '↻  REFRESHING...';
+  btn.disabled = true;
+  try {
+    await fetch('/api/display/refresh', {method:'POST'});
+  } catch(e) {}
+  setTimeout(() => {
+    btn.textContent = '↻ \u00a0REFRESH DISPLAY';
+    btn.disabled = false;
+  }, 1500);
+}
+
+async function openPoolModal() {
+  try {
+    const plates = await fetch('/api/plates').then(r=>r.json());
+    document.getElementById('pool-tbody').innerHTML = plates.map(p=>{
+      const pct=Math.round((p.confidence||0)*100);
+      const img=p.latest_image
+        ?`<img src="/captures/${p.latest_image}" style="width:88px;border-radius:3px">`:'—';
+      return `<tr>
+        <td class="td-plate">${p.plate_text}</td><td>${p.seen_count}</td>
+        <td class="${confClass(p.confidence)}">${pct}%</td>
+        <td>${fmt(p.first_seen)}</td><td>${fmt(p.last_seen)}</td><td>${img}</td>
+      </tr>`;
+    }).join('');
+  } catch(e){}
+  document.getElementById('modal-pool').classList.add('open');
+}
+function closePoolModal() { document.getElementById('modal-pool').classList.remove('open'); }
+document.getElementById('modal-pool').addEventListener('click',e=>{
+  if(e.target===document.getElementById('modal-pool')) closePoolModal();
+});
+
+setInterval(refreshLatest,  1500);
+setInterval(refreshPool,    3000);
+setInterval(refreshStats,   5000);
+setInterval(refreshSettings,8000);
+refreshLatest(); refreshPool(); refreshStats(); refreshSettings();
+</script>
+</body>
+</html>

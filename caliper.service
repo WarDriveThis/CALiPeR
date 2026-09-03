@@ -1,0 +1,17 @@
+[Unit]
+Description=Caliper License Plate OCR Service
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/caliper
+ExecStart=/usr/bin/python3 caliper.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
