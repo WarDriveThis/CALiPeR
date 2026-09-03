@@ -41,7 +41,7 @@ Again, it is the author’s hope that these concepts will be extended and simpli
 
 Disclaimer – 
 
-While the author believes the implementation and operation to be completely legal and within a US civilian’s rights to operate, exposure to civil and criminal liability for construction, deployment and operation of the devices described here is entirely at the risk of the operator. All are welcomed to use, modify and distribute the code and documentation associated with the projects without license or fee as long as the modifications remain open source in the public domain. No patent, sale or fees for use, implementation or proliferation of the code, executables or documentation is allowed.
+While the author believes the implementation and operation to be completely legal and within a US civilian’s rights to operate, exposure to civil and criminal liability for construction, deployment and operation of the devices described here is entirely at the risk of the operator. All are welcomed to use, modify and distribute the code and documentation associated with the projects without license or fee as long as the modifications remain open source in the public domain. 
 This tool is intended for security research, privacy auditing, and educational purposes. Always comply with local laws regarding wireless scanning and signal interception. The authors are not responsible for misuse.
 
 CALiPeR is distributed under the GNU General Public License version 3.
